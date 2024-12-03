@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Nearby Restaurants</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <h2>Find Nearby Restaurants</h2>
+    <input type="text" id="search" placeholder="Enter location" />
+    <div id="map" style="height: 500px;"></div>
+
+    <script>
+        const map = L.map('map').setView([51.505, -0.09], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,              
+        }).addTo(map);
+
+        // Fetch nearby restaurants
+        async function fetchRestaurants(lat, lng) {
+            const response = await fetch(`/nearby-restaurants?lat=${lat}&lng=${lng}`);
+            const restaurants = await response.json();
+            restaurants.forEach((restaurant) => {
+                L.marker([restaurant.lat, restaurant.lng]).addTo(map)
+                    .bindPopup(`<b>${restaurant.name}</b><br>${restaurant.address}`);
+            });
+        }
+
+        // Search Location Handler
+        document.getElementById('search').addEventListener('change', async (e) => {
+            const location = e.target.value;
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${location}&format=json`);
+            const data = await response.json();
+            if (data && data.length > 0) {
+                const { lat, lon } = data[0];
+                map.setView([lat, lon], 13);
+                fetchRestaurants(lat, lon);
+            }
+        });
+    </script>
+</body>
+</html>
